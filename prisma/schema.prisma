@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+model BusinessInfo {
+  id              String   @id @default(cuid())
+  shop            String   @unique
+  businessName    String?
+  gstin           String?
+  address         String?
+  city            String?
+  state           String?
+  pincode         String?
+  country         String?  @default("India")
+  email           String?
+  phone           String?
+  website         String?
+  logoUrl         String?
+  signatureUrl    String?
+  pan             String?
+  bankName        String?
+  bankAccountNumber String?
+  bankIfscCode    String?
+  bankBranch      String?
+  termsAndConditions String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Settings {
+  id                  String   @id @default(cuid())
+  shop                String   @unique
+  defaultState        String   @default("MH")
+  invoicePrefix       String   @default("INV")
+  invoiceStartNumber  Int      @default(1001)
+  dateFormat          String   @default("DD/MM/YYYY")
+  currency            String   @default("INR")
+  
+  // Template settings
+  selectedTemplate    String   @default("classic")
+  primaryColor        String   @default("#4a90e2")
+  fontFamily          String   @default("Roboto, sans-serif")
+  showLogo            Boolean  @default(true)
+  showHSN             Boolean  @default(true)
+  showSignature       Boolean  @default(true)
+  showTerms           Boolean  @default(true)
+  showNotes           Boolean  @default(true)
+  documentTitle       String   @default("TAX INVOICE")
+  
+  // Social media
+  facebook            String?
+  instagram           String?
+  twitter             String?
+  linkedin            String?
+  
+  // Email settings
+  smtpHost            String?
+  smtpPort            Int?
+  smtpUser            String?
+  smtpPassword        String?
+  smtpFromEmail       String?
+  autoSendInvoice     Boolean  @default(false)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  shop        String
+  name        String
+  description String?
+  content     String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([shop, name])
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  shop          String
+  orderId       String
+  orderName     String
+  invoiceNumber String   @unique
+  pdfUrl        String?
+  fileKey       String?
+  total         Float
+  gstAmount     Float
+  cgst          Float?
+  sgst          Float?
+  igst          Float?
+  customerName  String?
+  customerEmail String?
+  status        String   @default("generated")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  generatedAt   DateTime @default(now())
+
+  @@index([shop])
+  @@index([orderId])
+}
+
+model PrintJob {
+  id          String   @id @default(cuid())
+  shop        String
+  orderIds    String
+  jobType     String   @default("single")
+  status      String   @default("pending")
+  progress    Int      @default(0)
+  downloadUrl String?
+  fileKey     String?
+  error       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  completedAt DateTime?
+
+  @@index([shop])
+  @@index([status])
+}
+
+model HSNCode {
+  id          String   @id @default(cuid())
+  shop        String
+  code        String
+  description String
+  gstRate     Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([shop, code])
+  @@index([shop])
+}
+
+model ProductHSNMapping {
+  id         String   @id @default(cuid())
+  shop       String
+  productId  String
+  variantId  String?
+  hsnCode    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([shop, productId])
+  @@index([shop])
+  @@index([productId])
+}
