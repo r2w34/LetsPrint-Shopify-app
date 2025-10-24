@@ -4,6 +4,7 @@ import { GSTService } from './gstService';
 import { TemplateService } from './templateService';
 import { FileStorageService, StoredFile } from './fileStorageService';
 import { extractTShirtDetails, formatCurrency, formatDate } from './orderUtils';
+import { generateGSTProInvoiceHTML } from './gstProTemplate';
 
 export interface PDFGenerationOptions {
   templateId?: string;
@@ -335,38 +336,17 @@ export class PDFService {
    * Generate HTML content for a single order
    */
   private async generateOrderHTML(
-    order: OrderWithGST, 
-    template: Template, 
+    order: OrderWithGST,
+    template: Template,
     businessInfo: BusinessInfo,
     options: PDFGenerationOptions
   ): Promise<string> {
-    const tshirtDetails = order.line_items.map(item => extractTShirtDetails(item));
+    // Generate invoice number from order
+    const invoiceNumber = order.order_number || order.name || '1064';
     
-    return `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Order ${order.order_number}</title>
-        <style>
-          ${this.generateCSS(template)}
-        </style>
-      </head>
-      <body>
-        <div class="invoice-container">
-          ${this.generateHeader(businessInfo, template)}
-          ${this.generateInvoiceInfo(order)}
-          ${this.generateCustomerInfo(order)}
-          ${this.generateOrderItems(order, tshirtDetails, options)}
-          ${options.includeGSTBreakdown !== false ? this.generateGSTBreakdown(order.gstBreakdown) : ''}
-          ${this.generateFooter(businessInfo, template)}
-        </div>
-      </body>
-      </html>
-    `;
+    // Use GST Pro template for professional invoice layout
+    return generateGSTProInvoiceHTML(order, businessInfo, template, invoiceNumber, 'ORIGINAL');
   }
-
   /**
    * Generate HTML content for bulk orders
    */
